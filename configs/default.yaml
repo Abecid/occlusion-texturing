@@ -1,3 +1,4 @@
+# Ray Casting
 asset:
   path: assets/rabbit.glb
 
@@ -25,7 +26,12 @@ rendering:
       elevation: 30
       radius: 1
   max_hits: 4
-  # resolution: [512, 512]
+  height: 512
+  width: 512
 
   output:
     path: output
+
+  # Depth Estimation
+
+  # Controlnet

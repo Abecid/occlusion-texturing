@@ -6,13 +6,10 @@ from tqdm import tqdm
 import cv2
 import trimesh
 from trimesh.ray.ray_pyembree import RayMeshIntersector
-# import open3d as o3d
 import yaml
 
 import config
 
-image_height = 512
-image_width = 512
 
 def generate_c2w_matrix(azimuth, elevation, radius):
     # Convert degrees to radians
@@ -129,7 +126,7 @@ def ray_cast_mesh(mesh, rays_origins, ray_directions):
         return_locations=True)
     return index_triangles, index_ray, point_cloud
 
-def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path):
+def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, image_height, image_width):
     try:
         mesh = trimesh.load(model_path,  force='mesh', process=False)
 
@@ -201,5 +198,7 @@ if __name__ == "__main__":
     camera_angle_x = config_data['camera']['angle_x']
     max_hits = config_data['rendering']['max_hits']
     output_path = config_data['output']['path']
+    image_height = config_data['rendering']['height']
+    image_width = config_data['rendering']['width']
 
-    save_plane_images(model_path, views, camera_angle_x, max_hits, output_path)
+    save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, image_height, image_width)
