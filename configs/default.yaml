@@ -1,0 +1,31 @@
+asset:
+  path: assets/rabbit.glb
+
+camera:
+  angle_x: 0.9 # Field of view in radians (e.g., 0.9 radians ≈ 51.6 degrees)
+
+rendering:
+  views:
+    # Top-down view (camera above looking down)
+    - azimuth: 0
+      elevation: 90
+      radius: 1.5
+
+    # Slightly elevated views with different azimuths
+    - azimuth: 45
+      elevation: 30
+      radius: 1
+    - azimuth: 135
+      elevation: 30
+      radius: 1
+    - azimuth: 225
+      elevation: 30
+      radius: 1
+    - azimuth: 315
+      elevation: 30
+      radius: 1
+  max_hits: 4
+  # resolution: [512, 512]
+
+  output:
+    path: output
