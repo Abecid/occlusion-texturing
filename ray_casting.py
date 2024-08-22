@@ -127,6 +127,10 @@ def ray_cast_mesh(mesh, rays_origins, ray_directions):
     return index_triangles, index_ray, point_cloud
 
 def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, image_height, image_width):
+    model_name = os.path.splitext(os.path.basename(model_path))[0]
+    output_path = os.path.join(output_path, model_name)
+    os.makedirs(output_path, exist_ok=True)
+
     try:
         mesh = trimesh.load(model_path,  force='mesh', process=False)
 
@@ -134,7 +138,8 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
         
         camera_angle_x = float(camera_angle_x)
         for idx, view in tqdm(enumerate(views), total=len(views)):
-            c2w = generate_c2w_matrix(view['azimuth'], view['elevation'], view['radius'])
+            azimuth, elevation, radius = view['azimuth'], view['elevation'], view['radius']
+            c2w = generate_c2w_matrix(azimuth, elevation, radius)
             focal_length = 0.5 * image_width / np.tan(0.5 * camera_angle_x)
 
             cx = image_width / 2.0
@@ -173,7 +178,7 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
                         GenDepths[i, 4:7, u, v] = ray_colors[ray_index][i]
 
             # Save Images
-            save_dir = os.path.join(output_path, f"pose_{idx}")
+            save_dir = os.path.join(output_path, f"{idx}_azim_{azimuth}_elevation_{elevation}_radius_{radius}")
             os.makedirs(save_dir, exist_ok=True)
 
             for i in range(max_hits):
@@ -197,7 +202,7 @@ if __name__ == "__main__":
     views = config_data['rendering']['views']
     camera_angle_x = config_data['camera']['angle_x']
     max_hits = config_data['rendering']['max_hits']
-    output_path = config_data['output']['path']
+    output_path = config_data['output']['rc']
     image_height = config_data['rendering']['height']
     image_width = config_data['rendering']['width']
 

@@ -30,8 +30,14 @@ rendering:
   width: 512
 
   output:
-    path: output
+    rc: output/ray_casting
+    texture: output/texture
 
-  # Depth Estimation
+  # Depth to Image Generation
+  depth_model: lllyasviel/sd-controlnet-depth
+  stable_diffusion:
+    model: runwayml/stable-diffusion-v1-5
+    num_steps: 20
+  text_condition: Red Rabbit
 
   # Controlnet

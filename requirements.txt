@@ -1,5 +1,11 @@
 numpy
 tqdm
 cv2
-trimesh
 pyyaml
+
+# Ray Casting
+trimesh
+
+# Depth & Image Diffusion
+transformers
+torch
