@@ -43,12 +43,16 @@ def generate_texture(depth_image, text_condition, num_steps, depth_model="lllyas
 
     return image
 
+def apply_texture(texture_image):
+    pass
+
 def main(config_data):
     depth_model = config_data['depth_model']
     sd_model = config_data['stable_diffusion']['model']
     num_steps = config_data['stable_diffusion']['num_steps']
     text_condition = config_data['text_condition']
     output_path = config_data['output']['texture']
+    mesh_path = config_data['asset']['path']
 
     depth_image = depth_estimation(image_path)
     texture_image = generate_texture(depth_image, text_condition, num_steps)

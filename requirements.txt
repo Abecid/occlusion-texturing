@@ -9,3 +9,6 @@ trimesh
 # Depth & Image Diffusion
 transformers
 torch
+
+# UVP
+torchvision
