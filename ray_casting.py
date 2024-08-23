@@ -8,8 +8,33 @@ import trimesh
 from trimesh.ray.ray_pyembree import RayMeshIntersector
 import yaml
 import torch
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 import config
+
+
+def visualize_rays_and_intersections(mesh, rays_o, rays_d, points, num_vis=100):
+    # Plot the mesh
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(mesh.vertices[:, 0], mesh.vertices[:, 1], mesh.vertices[:, 2], color='gray', s=0.5, alpha=0.5)
+
+    # Plot the rays
+    for ray_o, ray_d in zip(rays_o[:num_vis], rays_d[:num_vis]):
+        ax.plot([ray_o[0], ray_o[0] + ray_d[0]], [ray_o[1], ray_o[1] + ray_d[1]], [ray_o[2], ray_o[2] + ray_d[2]], color='blue', alpha=0.5)
+
+    # Plot the intersection points
+    if points is not None and len(points) > 0:
+        ax.scatter(points[:, 0], points[:, 1], points[:, 2], color='red', s=5)
+
+    # Set labels and view
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.view_init(elev=20, azim=30)
+    plt.show()
+    plt.savefig('ray_visualization.png')
 
 
 def normalize_mesh(mesh):
@@ -79,7 +104,7 @@ def generate_c2w_matrix(azimuth, elevation, radius):
     translation = np.array([x, y, z])
 
     # Define the camera orientation (rotation)
-    forward = -translation / np.linalg.norm(translation)  # Camera looks towards the origin
+    forward = translation / np.linalg.norm(translation)  # Camera looks towards the origin
     right = np.cross(np.array([0, 1, 0]), forward)        # Compute the right vector
     right = right / np.linalg.norm(right)
     up = np.cross(forward, right)
@@ -160,6 +185,7 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
     centroid = np.mean(vertices, axis=0)
     vertices -= centroid
     mesh.vertices = vertices
+    
     # mesh, scale_factor = normalize_mesh(mesh)
     print(f"Centroid: {centroid}, Furthest Distance: {furthest_distance}")
     print(f"Mesh extents: {mesh.bounding_box.extents}")
@@ -168,6 +194,8 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
     for view_index, view in tqdm(enumerate(views), total=len(views)):
         azimuth, elevation, radius = view['azimuth'], view['elevation'], view['radius']
         c2w = generate_c2w_matrix(azimuth, elevation, radius)
+        camera_position = c2w[:3, 3]
+        print(f"Camera Position for View {view_index}: {camera_position}")
         focal_length = 0.5 * image_width / np.tan(0.5 * camera_angle_x)
 
         cx = image_width / 2.0
@@ -182,6 +210,11 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
         index_triangles, index_ray, points = ray_cast_mesh(mesh, rays_o, rays_d)
         normals = mesh.face_normals[index_triangles]
         colors = mesh.visual.face_colors[index_triangles][:, :3] / 255.0
+
+        # Call the visualization function after ray_cast_mesh
+        # visualize_rays_and_intersections(mesh, rays_o, rays_d, points)
+        print(f"Number of rays: {rays_o.shape[0]}")
+        print(f"Number of intersections: {len(points)}")
 
         # ray to image
         GenDepths = np.ones((max_hits, 1 + 3 + 3, image_height, image_width), dtype=np.float32)

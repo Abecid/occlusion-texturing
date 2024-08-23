@@ -2,6 +2,7 @@ numpy
 tqdm
 opencv-python
 pyyaml
+matplotlib
 
 # Ray Casting
 trimesh
