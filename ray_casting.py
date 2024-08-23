@@ -7,6 +7,7 @@ import cv2
 import trimesh
 from trimesh.ray.ray_pyembree import RayMeshIntersector
 import yaml
+import torch
 
 import config
 
@@ -21,6 +22,48 @@ def normalize_mesh(mesh):
     mesh.apply_scale(scale_factor)
 
     return mesh, scale_factor
+
+def normalize_to_box(pcd):
+    """
+    normalize point cloud to unit bounding box
+    center = (max - min)/2
+    scale = max(abs(x))
+    pcd: pc [N, P, dim] or [P, dim]
+    output: pc, centroid, furthest_distance
+
+    From https://github.com/yifita/pytorch_points
+    """
+    if len(pcd.shape) == 2:
+        axis = 0
+        P = pcd.shape[0]
+        D = pcd.shape[1]
+    elif len(pcd.shape) == 3:
+        axis = 1
+        P = pcd.shape[1]
+        D = pcd.shape[2]
+    else:
+        raise ValueError()
+    
+    if isinstance(pcd, np.ndarray):
+        maxP = np.amax(pcd, axis=axis, keepdims=True)
+        minP = np.amin(pcd, axis=axis, keepdims=True)
+        centroid = (maxP+minP)/2
+        pcd = pcd - centroid
+        furthest_distance = np.amax(np.abs(pcd), axis=(axis, -1), keepdims=True)
+        pcd = pcd / furthest_distance
+    elif isinstance(pcd, torch.Tensor):
+        maxP = torch.max(pcd, dim=axis, keepdim=True)[0]
+        minP = torch.min(pcd, dim=axis, keepdim=True)[0]
+        centroid = (maxP+minP)/2
+        pcd = pcd - centroid
+        in_shape = list(pcd.shape[:axis])+[P*D]
+        furthest_distance = torch.max(torch.abs(pcd).view(in_shape), dim=axis, keepdim=True)[0]
+        furthest_distance = furthest_distance.unsqueeze(-1)
+        pcd = pcd / furthest_distance
+    else:
+        raise ValueError()
+
+    return pcd, centroid, furthest_distance
 
 def generate_c2w_matrix(azimuth, elevation, radius):
     # Convert degrees to radians
@@ -111,8 +154,15 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
 
     mesh = trimesh.load(model_path, force='mesh', process=False)
     mesh.visual = mesh.visual.to_color()
-    mesh, scale_factor = normalize_mesh(mesh)
-    print(f"Scaled mesh by {scale_factor}")
+    
+    vertices = mesh.vertices
+    vertices, centroid, furthest_distance = normalize_to_box(vertices)
+    centroid = np.mean(vertices, axis=0)
+    vertices -= centroid
+    mesh.vertices = vertices
+    # mesh, scale_factor = normalize_mesh(mesh)
+    print(f"Centroid: {centroid}, Furthest Distance: {furthest_distance}")
+    print(f"Mesh extents: {mesh.bounding_box.extents}")
     
     camera_angle_x = float(camera_angle_x)
     for view_index, view in tqdm(enumerate(views), total=len(views)):
