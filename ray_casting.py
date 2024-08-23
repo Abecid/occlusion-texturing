@@ -141,6 +141,8 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
         for idx, ray_idx in enumerate(index_ray):
             hits_per_ray[ray_idx].append((points[idx], normals[idx], colors[idx]))
 
+        # hits_per_ray[ray_idx].sort(key=lambda hit: np.linalg.norm(hit[0] - c2w[:3, 3]))  # Sort by depth
+
         # Populate the hit images
         for i in range(max_hits):
             for ray_idx in range(image_height * image_width):
