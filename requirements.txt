@@ -1,10 +1,11 @@
 numpy
 tqdm
-cv2
+opencv-python
 pyyaml
 
 # Ray Casting
 trimesh
+embreex
 
 # Depth & Image Diffusion
 transformers

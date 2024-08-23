@@ -11,6 +11,17 @@ import yaml
 import config
 
 
+def normalize_mesh(mesh):
+    # Get the bounding box extents of the mesh (width, height, depth)
+    extents = mesh.bounding_box.extents
+    max_extent = np.max(extents)
+
+    # Scale the mesh so that its maximum extent is 1
+    scale_factor = 1.0 / max_extent
+    mesh.apply_scale(scale_factor)
+
+    return mesh, scale_factor
+
 def generate_c2w_matrix(azimuth, elevation, radius):
     # Convert degrees to radians
     azimuth = np.radians(azimuth)
@@ -40,25 +51,8 @@ def generate_c2w_matrix(azimuth, elevation, radius):
     return c2w
 
 def get_rays(directions, c2w):
-    """
-    Get ray origin and normalized directions in world coordinate for all pixels in one image.
-    Reference: https://www.scratchapixel.com/lessons/3d-basic-rendering/
-               ray-tracing-generating-camera-rays/standard-coordinate-systems
-
-    Inputs:
-        directions: (H, W, 3) precomputed ray directions in camera coordinate
-        c2w: (3, 4) transformation matrix from camera coordinate to world coordinate
-
-    Outputs:
-        rays_o: (H*W, 3), the origin of the rays in world coordinate
-        rays_d: (H*W, 3), the normalized direction of the rays in world coordinate
-    """
-    # Rotate ray directions from camera coordinate to the world coordinate
-    rays_d = directions @ c2w[:3, :3].T # (H, W, 3)
-    rays_d = rays_d / (np.linalg.norm(rays_d, axis=-1, keepdims=True) + 1e-8)
-    # The origin of all rays is the camera origin in world coordinate
-    rays_o = np.broadcast_to(c2w[:3, 3], rays_d.shape) # (H, W, 3)
-
+    rays_d = directions @ c2w[:3, :3].T
+    rays_o = np.broadcast_to(c2w[:3, 3], rays_d.shape)
     return rays_o, rays_d
 
 class RaycastingImaging:
@@ -89,41 +83,25 @@ class RaycastingImaging:
 
 
 def generate_rays(image_resolution, intrinsics, c2w):
-    if isinstance(image_resolution, tuple):
-        assert len(image_resolution) == 2
-    else:
-        image_resolution = (image_resolution, image_resolution)
-    image_width, image_height = image_resolution
+    h, w = image_resolution
+    fx, fy = intrinsics[0, 0], intrinsics[1, 1]
+    cx, cy = intrinsics[0, 2], intrinsics[1, 2]
 
-    # generate an array of screen coordinates for the rays
-    # (rays are placed at locations [i, j] in the image)
-    rays_screen_coords = np.mgrid[0:image_height, 0:image_width].reshape(
-        2, image_height * image_width).T  # [h, w, 2]
-
-    fx = intrinsics[0, 0]
-    fy = intrinsics[1, 1]
-    cx = intrinsics[0, 2]
-    cy = intrinsics[1, 2]
-
-    grid = rays_screen_coords.reshape(image_height, image_width, 2)
+    i, j = np.meshgrid(np.arange(w), np.arange(h), indexing='xy')
+    directions = np.stack([(i - cx) / fx, -(j - cy) / fy, -np.ones_like(i)], axis=-1)
     
-    i, j = grid[..., 1], grid[..., 0]
-    directions = np.stack([(i-cx)/fx, -(j-cy)/fy, -np.ones_like(i)], -1) # (H, W, 3)
-
-    rays_origins, ray_directions = get_rays(directions, c2w)
-    rays_origins = rays_origins.reshape(-1, 3)
-    ray_directions = ray_directions.reshape(-1, 3)
-    
-    return rays_screen_coords, rays_origins, ray_directions
+    rays_o, rays_d = get_rays(directions, c2w)
+    return rays_o.reshape(-1, 3), rays_d.reshape(-1, 3)
 
 
-def ray_cast_mesh(mesh, rays_origins, ray_directions):
+def ray_cast_mesh(mesh, rays_o, rays_d):
     intersector = RayMeshIntersector(mesh)
     index_triangles, index_ray, point_cloud = intersector.intersects_id(
-        ray_origins=rays_origins,
-        ray_directions=ray_directions,
+        ray_origins=rays_o,
+        ray_directions=rays_d,
         multiple_hits=True,
-        return_locations=True)
+        return_locations=True
+    )
     return index_triangles, index_ray, point_cloud
 
 def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, image_height, image_width):
@@ -131,66 +109,61 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
     output_path = os.path.join(output_path, model_name)
     os.makedirs(output_path, exist_ok=True)
 
-    try:
-        mesh = trimesh.load(model_path,  force='mesh', process=False)
+    mesh = trimesh.load(model_path, force='mesh', process=False)
+    mesh.visual = mesh.visual.to_color()
+    mesh, scale_factor = normalize_mesh(mesh)
+    print(f"Scaled mesh by {scale_factor}")
+    
+    camera_angle_x = float(camera_angle_x)
+    for view_index, view in tqdm(enumerate(views), total=len(views)):
+        azimuth, elevation, radius = view['azimuth'], view['elevation'], view['radius']
+        c2w = generate_c2w_matrix(azimuth, elevation, radius)
+        focal_length = 0.5 * image_width / np.tan(0.5 * camera_angle_x)
 
-        mesh.visual = mesh.visual.to_color()
-        
-        camera_angle_x = float(camera_angle_x)
-        for idx, view in tqdm(enumerate(views), total=len(views)):
-            azimuth, elevation, radius = view['azimuth'], view['elevation'], view['radius']
-            c2w = generate_c2w_matrix(azimuth, elevation, radius)
-            focal_length = 0.5 * image_width / np.tan(0.5 * camera_angle_x)
+        cx = image_width / 2.0
+        cy = image_height / 2.0
 
-            cx = image_width / 2.0
-            cy = image_height / 2.0
+        intrinsics = np.array([[focal_length, 0, cx],
+                                [0, focal_length, cy],
+                                [0, 0, 1]])
 
-            intrinsics = np.array([[focal_length, 0, cx],
-                                   [0, focal_length, cy],
-                                   [0, 0, 1]])
+        rays_o, rays_d = generate_rays((image_height, image_width), intrinsics, c2w)
 
-            rays_origins, ray_directions = generate_rays((image_width, image_height), intrinsics, c2w)
+        index_triangles, index_ray, points = ray_cast_mesh(mesh, rays_o, rays_d)
+        normals = mesh.face_normals[index_triangles]
+        colors = mesh.visual.face_colors[index_triangles][:, :3] / 255.0
 
-            ray_indexes, points, normals, colors = ray_cast_mesh(mesh, rays_origins, ray_directions)
-            normals = normals / np.linalg.norm(normals, axis=1, keepdims=True)
-            colors = colors[:, :3] / 255.0
+        # ray to image
+        GenDepths = np.ones((max_hits, 1 + 3 + 3, image_height, image_width), dtype=np.float32)
+        GenDepths[:, :4, :, :] = 0 # set depth and normal to zero while color is by default 1 (white)
 
-            # collect points and normals for each ray
-            ray_points = defaultdict(list)
-            ray_normals = defaultdict(list)
-            ray_colors = defaultdict(list)
-            for ray_index, point, normal, color in zip(ray_indexes, points, normals, colors):
-                ray_points[ray_index].append(point)
-                ray_normals[ray_index].append(normal)
-                ray_colors[ray_index].append(color)
+        hits_per_ray = defaultdict(list)
+        for idx, ray_idx in enumerate(index_ray):
+            hits_per_ray[ray_idx].append((points[idx], normals[idx], colors[idx]))
 
-            # ray to image
-            GenDepths = np.ones((max_hits, 1 + 3 + 3, image_height, image_width), dtype=np.float32)
-            GenDepths[:, :4, :, :] = 0 # set depth and normal to zero while color is by default 1 (white)
+        # Populate the hit images
+        for i in range(max_hits):
+            for ray_idx in range(image_height * image_width):
+                if i < len(hits_per_ray[ray_idx]):
+                    u, v = divmod(ray_idx, image_width)
+                    point, normal, color = hits_per_ray[ray_idx][i]
+                    depth = np.linalg.norm(point - c2w[:3, 3])
 
-            for i in range(max_hits):
-                for ray_index, ray_point in ray_points.items():
-                    if i < len(ray_point):
-                        u = ray_index // image_width
-                        v = ray_index % image_width
-                        GenDepths[i, 0, u, v] = np.linalg.norm(ray_point[i] - c2w[:, 3])
-                        GenDepths[i, 1:4, u, v] = ray_normals[ray_index][i]
-                        GenDepths[i, 4:7, u, v] = ray_colors[ray_index][i]
+                    GenDepths[i, 0, u, v] = depth
+                    GenDepths[i, 1:4, u, v] = normal
+                    GenDepths[i, 4:7, u, v] = color
 
-            # Save Images
-            save_dir = os.path.join(output_path, f"{idx}_azim_{azimuth}_elevation_{elevation}_radius_{radius}")
-            os.makedirs(save_dir, exist_ok=True)
+        # Save Images
+        save_dir = os.path.join(output_path, f"{view_index}_{azimuth}_{elevation}_{radius}")
+        os.makedirs(save_dir, exist_ok=True)
 
-            for i in range(max_hits):
-                color_image = (GenDepths[i, 4:7] * 255).astype(np.uint8)
-                color_image = np.transpose(color_image, (1, 2, 0)) # (h, w, c)
-                image_path = os.path.join(save_dir, f"hit_{i}.png")
-                cv2.imwrite(image_path, cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR))
+        for i in range(max_hits):
+            color_image = (GenDepths[i, 4:7] * 255).astype(np.uint8)
+            color_image = np.transpose(color_image, (1, 2, 0)) # (h, w, c)
+            image_path = os.path.join(save_dir, f"hit_{i}.png")
+            cv2.imwrite(image_path, cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR))
 
-        print("saved")
-    except Exception as e:
-        print(e)
-        return
+    print("saved")
                 
 
 if __name__ == "__main__":
