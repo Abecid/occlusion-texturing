@@ -14,7 +14,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import config
 
 
-def visualize_rays_and_intersections(mesh, rays_o, rays_d, points, num_vis=100):
+def visualize_rays_and_intersections(mesh, rays_o, rays_d, points, num_vis=100, ray_length = 1.5, save_dir='./'):
     # Plot the mesh
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -22,7 +22,12 @@ def visualize_rays_and_intersections(mesh, rays_o, rays_d, points, num_vis=100):
 
     # Plot the rays
     for ray_o, ray_d in zip(rays_o[:num_vis], rays_d[:num_vis]):
-        ax.plot([ray_o[0], ray_o[0] + ray_d[0]], [ray_o[1], ray_o[1] + ray_d[1]], [ray_o[2], ray_o[2] + ray_d[2]], color='blue', alpha=0.5)
+        ax.plot(
+            [ray_o[0], ray_o[0] + ray_d[0] * ray_length], 
+            [ray_o[1], ray_o[1] + ray_d[1] * ray_length], 
+            [ray_o[2], ray_o[2] + ray_d[2] * ray_length], 
+            color='blue', alpha=0.5
+        )
 
     # Plot the intersection points
     if points is not None and len(points) > 0:
@@ -32,9 +37,15 @@ def visualize_rays_and_intersections(mesh, rays_o, rays_d, points, num_vis=100):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    ax.view_init(elev=20, azim=30)
+
+    ax.view_init(elev=30, azim=45)
+
+    ax.grid(False)
+
     plt.show()
-    plt.savefig('ray_visualization.png')
+    filename = "ray_visualization.png"
+    file_path = os.path.join(save_dir, filename)
+    plt.savefig(file_path)
 
 
 def normalize_mesh(mesh):
@@ -211,8 +222,12 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
         normals = mesh.face_normals[index_triangles]
         colors = mesh.visual.face_colors[index_triangles][:, :3] / 255.0
 
+        # Save Images
+        save_dir = os.path.join(output_path, f"{view_index}_{azimuth}_{elevation}_{radius}")
+        os.makedirs(save_dir, exist_ok=True)
+
         # Call the visualization function after ray_cast_mesh
-        # visualize_rays_and_intersections(mesh, rays_o, rays_d, points)
+        visualize_rays_and_intersections(mesh, rays_o, rays_d, points, save_dir=save_dir)
         print(f"Number of rays: {rays_o.shape[0]}")
         print(f"Number of intersections: {len(points)}")
 
@@ -237,10 +252,6 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
                     GenDepths[i, 0, u, v] = depth
                     GenDepths[i, 1:4, u, v] = normal
                     GenDepths[i, 4:7, u, v] = color
-
-        # Save Images
-        save_dir = os.path.join(output_path, f"{view_index}_{azimuth}_{elevation}_{radius}")
-        os.makedirs(save_dir, exist_ok=True)
 
         for i in range(max_hits):
             color_image = (GenDepths[i, 4:7] * 255).astype(np.uint8)
