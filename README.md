@@ -4,8 +4,12 @@
 ```
 pip install -r requirements.txt
 ```
+- Refer to configs to setup your configuraion yaml file
 
 ## 1. Get Rendered Images from Plane Intersections
+```
+python ray_casting.py
+```
 
 ## 2. Depth to Image Generation 
 
