@@ -78,11 +78,10 @@ def generate_style(
     
     pipe.to(device)
 
-    pipe.enable_model_cpu_offload()
-    
-    image = pipe(text_condition, condition_image, num_inference_steps=num_steps).images[0]
+    pipe.enable_model_cpu_offload()    
     
     if style_image is None:
+        image = pipe(text_condition, condition_image, num_inference_steps=num_steps).images[0]
         return image
 
     style_image.resize((512, 512))

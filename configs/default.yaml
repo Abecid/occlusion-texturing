@@ -42,7 +42,7 @@ stable_diffusion:
   num_steps: 20
 stylization:
   base_image_path: output/ray_casting/model/0_0_90_3/hit_0.png
-  text_condition: Top View of Red Minivan
+  text_condition: Top view of a minivan, masterpiece, best quality, high quality
   type: canny # Choose from: [depth, canny]
   style_image_path: assets/images/starry_night.png
 
