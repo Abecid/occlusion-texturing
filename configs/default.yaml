@@ -34,12 +34,15 @@ output:
   texture: output/texture
 
 # Depth to Image Generation
-depth_model: lllyasviel/sd-controlnet-depth
+controlnet:
+  depth_model: lllyasviel/sd-controlnet-depth
+  canny_model: lllyasviel/sd-controlnet-canny
 stable_diffusion:
   model: runwayml/stable-diffusion-v1-5
   num_steps: 20
 stylization:
   image_path: output/ray_casting/model/0_0_90_3/hit_0.png
   text_condition: Top View of Red Minivan
+  type: canny # Choose from: [depth, canny]
 
 # Instant Style

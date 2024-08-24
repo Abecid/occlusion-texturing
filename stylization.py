@@ -33,6 +33,7 @@ def depth_estimation(image):
 def get_canny_edges(image):
     low_threshold = 100
     high_threshold = 200
+    image = np.array(image)
 
     image = cv2.Canny(image, low_threshold, high_threshold)
     image = image[:, :, None]
@@ -42,9 +43,9 @@ def get_canny_edges(image):
     return image
 
 # Generate image with controlnet
-def generate_style(depth_image, text_condition, num_steps, depth_model="lllyasviel/sd-controlnet-depth", sd_model="runwayml/stable-diffusion-v1-5"):
+def generate_style(depth_image, text_condition, num_steps, controlnet="lllyasviel/sd-controlnet-depth", sd_model="runwayml/stable-diffusion-v1-5"):
     controlnet = ControlNetModel.from_pretrained(
-        depth_model, torch_dtype=torch.float16
+        controlnet, torch_dtype=torch.float16
     )
 
     pipe = StableDiffusionControlNetPipeline.from_pretrained(
@@ -65,26 +66,32 @@ def apply_texture(stylized_image):
     pass
 
 def main(config_data):
-    depth_model = config_data['depth_model']
+    depth_model = config_data['controlnet']['depth_model']
+    canny_model = config_data['controlnet']['canny_model']
     sd_model = config_data['stable_diffusion']['model']
     num_steps = config_data['stable_diffusion']['num_steps']
     text_condition = config_data['stylization']['text_condition']
     image_path = config_data['stylization']['image_path']
     output_path = config_data['output']['texture']
     mesh_path = config_data['asset']['path']
+    stylization_type = config_data['stylization']['type']
+    controlnet = depth_model if stylization_type == "depth" else canny_model
     mesh_name = os.path.splitext(os.path.basename(mesh_path))[0]
 
     image = Image.open(image_path)
 
-    depth_image = depth_estimation(image)
-    stylized_image = generate_style(depth_image, text_condition, num_steps)
+    if stylization_type == "depth":
+        condition_image = depth_estimation(image)
+    elif stylization_type == "canny":
+        condition_image = get_canny_edges(image)
+    stylized_image = generate_style(condition_image, text_condition, num_steps, controlnet=controlnet, sd_model=sd_model)
     
-    depth_filename = f"depth_{mesh_name}.png"
-    filename = f"stylized_{mesh_name}.png"
+    depth_filename = f"{stylization_type}_{mesh_name}.png"
+    filename = f"stylized_{mesh_name}_{stylization_type}.png"
     style_output_path = os.path.join(output_path, filename)
     os.makedirs(os.path.dirname(style_output_path), exist_ok=True)
     stylized_image.save(style_output_path)
-    depth_image.save(os.path.join(output_path, depth_filename))
+    condition_image.save(os.path.join(output_path, depth_filename))
 
 if __name__ == "__main__":
     args = config.get_config()
