@@ -1,5 +1,12 @@
 __pycache__
 .vscode
 
+# 3D Assets
 objaverse
+
+# Output from Scripts
 # output
+
+# IP-Adapter
+models
+sdxl_models
