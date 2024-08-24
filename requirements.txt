@@ -12,6 +12,7 @@ embreex
 transformers
 torch
 diffusers
+accelerate
 
 # UVP
 torchvision

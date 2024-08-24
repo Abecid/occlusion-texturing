@@ -10,6 +10,14 @@ import cv2
 
 import config
 
+# Set the device variable
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+if device.type == "cuda":
+    print("Using CUDA")
+else:
+    print("Using CPU")
+
 # Get depth estimation
 def depth_estimation(image):
     depth_estimator = pipeline('depth-estimation')
@@ -44,9 +52,8 @@ def generate_style(depth_image, text_condition, num_steps, depth_model="lllyasvi
     )
 
     pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
-
-    if torch.cuda.is_available():
-        pipe.to('cuda')
+    
+    pipe.to(device)
 
     pipe.enable_model_cpu_offload()
 
@@ -72,10 +79,12 @@ def main(config_data):
     depth_image = depth_estimation(image)
     stylized_image = generate_style(depth_image, text_condition, num_steps)
     
+    depth_filename = f"depth_{mesh_name}.png"
     filename = f"stylized_{mesh_name}.png"
-    output_path = os.path.join(output_path, filename)
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    stylized_image.save(output_path)
+    style_output_path = os.path.join(output_path, filename)
+    os.makedirs(os.path.dirname(style_output_path), exist_ok=True)
+    stylized_image.save(style_output_path)
+    depth_image.save(os.path.join(output_path, depth_filename))
 
 if __name__ == "__main__":
     args = config.get_config()

@@ -40,6 +40,6 @@ stable_diffusion:
   num_steps: 20
 stylization:
   image_path: output/ray_casting/model/0_0_90_3/hit_0.png
-  text_condition: Red Rabbit
+  text_condition: Top View of Red Minivan
 
 # Instant Style
