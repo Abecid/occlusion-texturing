@@ -72,7 +72,7 @@ def main(config_data):
     num_steps = config_data['stable_diffusion']['num_steps']
     text_condition = config_data['stylization']['text_condition']
     image_path = config_data['stylization']['image_path']
-    output_path = config_data['output']['texture']
+    output_path = config_data['output']['style']
     mesh_path = config_data['asset']['path']
     stylization_type = config_data['stylization']['type']
     controlnet = depth_model if stylization_type == "depth" else canny_model

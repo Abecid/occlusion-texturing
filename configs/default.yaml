@@ -31,7 +31,7 @@ rendering:
 
 output:
   rc: output/ray_casting
-  texture: output/texture
+  style: output/style
 
 # Depth to Image Generation
 controlnet:
