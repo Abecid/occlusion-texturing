@@ -12,5 +12,8 @@ python ray_casting.py
 ```
 
 ## 2. Depth to Image Generation 
+```
+python stylization.py
+```
 
 ## 3. Mesh Reconstruction via UV Mapping (xAtlas)
