@@ -41,8 +41,12 @@ stable_diffusion:
   model: runwayml/stable-diffusion-v1-5
   num_steps: 20
 stylization:
-  image_path: output/ray_casting/model/0_0_90_3/hit_0.png
+  base_image_path: output/ray_casting/model/0_0_90_3/hit_0.png
   text_condition: Top View of Red Minivan
   type: canny # Choose from: [depth, canny]
+  style_image_path: assets/images/starry_night.png
 
 # Instant Style
+ip_adapter:
+  ckpt_path: models/ip-adapter_sdxl.bin
+  image_encoder: models/image_encoder

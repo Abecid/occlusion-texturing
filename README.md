@@ -3,6 +3,13 @@
 ## Setup
 ```
 pip install -r requirements.txt
+
+sudo apt-get install git-lfs
+
+git lfs install
+git clone https://huggingface.co/h94/IP-Adapter
+mv IP-Adapter/models models
+mv IP-Adapter/sdxl_models sdxl_models
 ```
 - Refer to configs to setup your configuraion yaml file
 
