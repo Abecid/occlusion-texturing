@@ -4,6 +4,7 @@
 ```
 pip install -r requirements.txt
 
+# If git-lts is not installed
 sudo apt-get install git-lfs
 
 git lfs install
@@ -11,7 +12,7 @@ git clone https://huggingface.co/h94/IP-Adapter
 mv IP-Adapter/models models
 mv IP-Adapter/sdxl_models sdxl_models
 ```
-- Refer to configs to setup your configuraion yaml file
+- Refer to "./configs/default.yaml" to setup your configuraion file
 
 ## 1. Get Rendered Images from Plane Intersections
 ```
