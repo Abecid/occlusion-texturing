@@ -2,7 +2,7 @@ import numpy as np
 import os
 
 from transformers import pipeline
-from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, UniPCMultistepScheduler
+from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, UniPCMultistepScheduler, StableDiffusionXLControlNetPipeline
 from PIL import Image
 import torch
 import yaml
@@ -71,9 +71,17 @@ def generate_style(
         controlnet, torch_dtype=torch.float16
     )
 
-    pipe = StableDiffusionControlNetPipeline.from_pretrained(
-        sd_model, controlnet=controlnet, safety_checker=None, torch_dtype=torch.float16
-    )
+    if 'xl' in sd_model:
+        pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
+            sd_model,
+            controlnet=controlnet,
+            torch_dtype=torch.float16,
+            add_watermarker=False,
+        )
+    else:
+        pipe = StableDiffusionControlNetPipeline.from_pretrained(
+            sd_model, controlnet=controlnet, safety_checker=None, torch_dtype=torch.float16
+        )
     pipe.enable_vae_tiling()
     pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
     
@@ -82,6 +90,7 @@ def generate_style(
     # pipe.enable_model_cpu_offload()    
     
     if style_image is None:
+        print(f"Generating image with text condition: {text_condition}")
         image = pipe(text_condition, condition_image, num_inference_steps=num_steps).images[0]
         return image
 
@@ -91,7 +100,11 @@ def generate_style(
     original_target_blocks = ["block"]
     style_target_blocks = ["up_blocks.0.attentions.1"]
     style_layout_target_blocks = ["up_blocks.0.attentions.1", "down_blocks.2.attentions.1"] # for style+layout blocks
-    ip_model = IPAdapter(pipe, image_encoder, ip_adapter_ckpt_path, device, target_blocks=style_target_blocks)
+    
+    if 'xl' in sd_model:
+        ip_model = IPAdapterXL(pipe, image_encoder, ip_adapter_ckpt_path, device, target_blocks=style_target_blocks)
+    else:
+        ip_model = IPAdapter(pipe, image_encoder, ip_adapter_ckpt_path, device, target_blocks=style_target_blocks)
     
     images = ip_model.generate(
         pil_image=style_image,

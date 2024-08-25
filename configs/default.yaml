@@ -35,18 +35,18 @@ output:
 
 # Depth to Image Generation
 controlnet:
-  depth_model: lllyasviel/sd-controlnet-depth
-  canny_model: lllyasviel/sd-controlnet-canny
+  depth_model: lllyasviel/sd-controlnet-depth # ['lllyasviel/sd-controlnet-depth', 'diffusers/controlnet-depth-sdxl-1.0']
+  canny_model: diffusers/controlnet-canny-sdxl-1.0 # ['lllyasviel/sd-controlnet-canny', 'diffusers/controlnet-canny-sdxl-1.0']
 stable_diffusion:
-  model: runwayml/stable-diffusion-v1-5
+  model: stabilityai/stable-diffusion-xl-base-1.0 # ['runwayml/stable-diffusion-v1-5', 'stabilityai/stable-diffusion-xl-base-1.0']
   num_steps: 20
 stylization:
   base_image_path: output/ray_casting/model/0_0_90_3/hit_0.png
   text_condition: Top view of a minivan, masterpiece, best quality, high quality
   type: canny # Choose from: [depth, canny]
-  style_image_path: assets/images/starry_night.png
+  style_image_path: assets/images/red_volcano.png
 
 # Instant Style
 ip_adapter:
-  ckpt_path: models/ip-adapter_sd15.bin
-  image_encoder: models/image_encoder
+  ckpt_path: sdxl_models/ip-adapter_sdxl.bin # ['models/ip-adapter_sd15.bin', 'sdxl_models/ip-adapter_sdxl.bin']
+  image_encoder: sdxl_models/ip-adapter_sdxl.bin # ['models/image_encoder', 'sdxl_models/ip-adapter_sdxl.bin']
