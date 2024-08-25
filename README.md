@@ -12,7 +12,8 @@ git clone https://huggingface.co/h94/IP-Adapter
 mv IP-Adapter/models models
 mv IP-Adapter/sdxl_models sdxl_models
 
-download_objaverse.py
+# Download Sample Objaverse Objects
+python download_objaverse.py
 ```
 - Refer to "./configs/default.yaml" to setup your configuraion file
 
