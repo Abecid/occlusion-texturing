@@ -77,7 +77,7 @@ def apply_styled_colors_to_mesh(mesh, hit_data, styled_hit_images):
             for i in range(max_hits):
                 if i < len(hits):
                     u, v = divmod(ray_idx, image_width)
-                    point, original_color, face_idx = hits[i]
+                    point, normal, original_color, face_idx = hits[i]
                     new_color = styled_colors[i][u * image_width + v]
                     new_face_colors[face_idx] = (new_color * 255).astype(np.uint8)
         

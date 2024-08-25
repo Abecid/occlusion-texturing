@@ -237,12 +237,12 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
         print(f"Number of intersections: {len(points)}")
 
         # ray to image
-        GenDepths = np.ones((max_hits, 1 + 3 + 3, image_height, image_width), dtype=np.float32)
+        GenDepths = np.ones((max_hits, 1 + 3 + 3 + 1, image_height, image_width), dtype=np.float32)
         GenDepths[:, :4, :, :] = 0 # set depth and normal to zero while color is by default 1 (white)
 
         hits_per_ray = defaultdict(list)
         for idx, ray_idx in enumerate(index_ray):
-            hits_per_ray[ray_idx].append((points[idx], normals[idx], colors[idx]))
+            hits_per_ray[ray_idx].append((points[idx], normals[idx], colors[idx], index_triangles[idx]))
 
         # hits_per_ray[ray_idx].sort(key=lambda hit: np.linalg.norm(hit[0] - c2w[:3, 3]))  # Sort by depth
         
@@ -261,12 +261,13 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
             for ray_idx in range(image_height * image_width):
                 if i < len(hits_per_ray[ray_idx]):
                     u, v = divmod(ray_idx, image_width)
-                    point, normal, color = hits_per_ray[ray_idx][i]
+                    point, normal, color, face_idx = hits_per_ray[ray_idx][i]
                     depth = np.linalg.norm(point - c2w[:3, 3])
 
                     GenDepths[i, 0, u, v] = depth
                     GenDepths[i, 1:4, u, v] = normal
                     GenDepths[i, 4:7, u, v] = color
+                    GenDepths[i, 7, u, v] = face_idx
 
         for i in range(max_hits):
             color_image = (GenDepths[i, 4:7] * 255).astype(np.uint8)
