@@ -5,6 +5,7 @@
 pip install -r requirements.txt
 
 # If git-lts is not installed
+sudo apt-get update
 sudo apt-get install git-lfs
 
 git lfs install
