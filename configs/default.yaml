@@ -36,9 +36,9 @@ output:
 # Depth to Image Generation
 controlnet:
   depth_model: lllyasviel/sd-controlnet-depth # ['lllyasviel/sd-controlnet-depth', 'diffusers/controlnet-depth-sdxl-1.0']
-  canny_model: diffusers/controlnet-canny-sdxl-1.0 # ['lllyasviel/sd-controlnet-canny', 'diffusers/controlnet-canny-sdxl-1.0']
+  canny_model: lllyasviel/sd-controlnet-canny # ['lllyasviel/sd-controlnet-canny', 'diffusers/controlnet-canny-sdxl-1.0']
 stable_diffusion:
-  model: stabilityai/stable-diffusion-xl-base-1.0 # ['runwayml/stable-diffusion-v1-5', 'stabilityai/stable-diffusion-xl-base-1.0']
+  model: runwayml/stable-diffusion-v1-5 # ['runwayml/stable-diffusion-v1-5', 'stabilityai/stable-diffusion-xl-base-1.0']
   num_steps: 20
 stylization:
   base_image_path: output/ray_casting/model/0_0_90_3/hit_0.png
@@ -48,5 +48,5 @@ stylization:
 
 # Instant Style
 ip_adapter:
-  ckpt_path: sdxl_models/ip-adapter_sdxl.bin # ['models/ip-adapter_sd15.bin', 'sdxl_models/ip-adapter_sdxl.bin']
-  image_encoder: sdxl_models/image_encoder # ['models/image_encoder', 'sdxl_models/image_encoder']
+  ckpt_path: models/ip-adapter_sd15.bin # ['models/ip-adapter_sd15.bin', 'sdxl_models/ip-adapter_sdxl.bin']
+  image_encoder: models/image_encoder # ['models/image_encoder', 'sdxl_models/image_encoder']
