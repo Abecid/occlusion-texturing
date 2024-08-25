@@ -21,4 +21,6 @@ git clone https://huggingface.co/h94/IP-Adapter
 mv IP-Adapter/models models
 mv IP-Adapter/sdxl_models sdxl_models
 
+python download_objaverse.py
+
 echo "Setup complete!"
