@@ -10,10 +10,12 @@ embreex
 
 # Depth & Image Diffusion
 transformers
-torch
+torch==2.1 # To avoid conflict with pytorch3d (<= torch 2.1)
 diffusers
 accelerate
+einops
 
 # UVP
-torchvision
+torchvision==0.16
 pytorch3d
+# cupy

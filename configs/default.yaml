@@ -48,5 +48,5 @@ stylization:
 
 # Instant Style
 ip_adapter:
-  ckpt_path: models/ip-adapter_sdxl.bin
+  ckpt_path: models/ip-adapter_sd15.bin
   image_encoder: models/image_encoder

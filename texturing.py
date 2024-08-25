@@ -4,7 +4,7 @@ import torch
 from diffusers.utils import numpy_to_pil
 from torchvision.transforms import Resize, InterpolationMode
 
-from .renderer.project import UVProjection as UVP
+from renderer.project import UVProjection as UVP
 
 class StyleTexturingPipeline():
     def __init__(

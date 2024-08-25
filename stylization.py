@@ -10,7 +10,7 @@ import cv2
 
 import config
 from ip_adapter import IPAdapterXL, IPAdapter
-from texturing import StyleTexturingPipeline as stp
+# from texturing import StyleTexturingPipeline as stp
 
 # Set the device variable
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -79,7 +79,7 @@ def generate_style(
     
     pipe.to(device)
 
-    pipe.enable_model_cpu_offload()    
+    # pipe.enable_model_cpu_offload()    
     
     if style_image is None:
         image = pipe(text_condition, condition_image, num_inference_steps=num_steps).images[0]
