@@ -49,4 +49,4 @@ stylization:
 # Instant Style
 ip_adapter:
   ckpt_path: sdxl_models/ip-adapter_sdxl.bin # ['models/ip-adapter_sd15.bin', 'sdxl_models/ip-adapter_sdxl.bin']
-  image_encoder: sdxl_models/ip-adapter_sdxl.bin # ['models/image_encoder', 'sdxl_models/ip-adapter_sdxl.bin']
+  image_encoder: sdxl_models/image_encoder # ['models/image_encoder', 'sdxl_models/image_encoder']
