@@ -116,8 +116,8 @@ def generate_style(
         
     pipe.enable_vae_tiling()
     
-    # pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
-    pipe.scheduler = DDPMScheduler.from_config(pipe.scheduler.config)
+    pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config) # SD-1.5
+    # pipe.scheduler = DDPMScheduler.from_config(pipe.scheduler.config)
     
     pipe.to(device)
 
@@ -131,14 +131,14 @@ def generate_style(
     style_image.resize((512, 512))
     
     # load ip-adapter
-    original_target_blocks = ["block"]
+    original_target_blocks = ["block"] # for original and for style using sd-1.5
     style_target_blocks = ["up_blocks.0.attentions.1"]
     style_layout_target_blocks = ["up_blocks.0.attentions.1", "down_blocks.2.attentions.1"] # for style+layout blocks
     
     if 'xl' in sd_model:
         ip_model = IPAdapterXL(pipe, image_encoder, ip_adapter_ckpt_path, device, target_blocks=style_target_blocks)
     else:
-        ip_model = IPAdapter(pipe, image_encoder, ip_adapter_ckpt_path, device, target_blocks=style_target_blocks)
+        ip_model = IPAdapter(pipe, image_encoder, ip_adapter_ckpt_path, device, target_blocks=original_target_blocks)
     
     images = ip_model.generate(
         pil_image=style_image,
