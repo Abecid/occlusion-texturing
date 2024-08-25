@@ -2,7 +2,8 @@ import numpy as np
 import os
 
 from transformers import pipeline
-from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, UniPCMultistepScheduler, StableDiffusionXLControlNetPipeline
+from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline
+from diffusers import UniPCMultistepScheduler, DDPMScheduler
 from PIL import Image
 import torch
 import yaml
@@ -112,8 +113,11 @@ def generate_style(
         pipe = StableDiffusionControlNetPipeline.from_pretrained(
             sd_model, controlnet=controlnet, safety_checker=None, torch_dtype=torch.float16
         )
+        
     pipe.enable_vae_tiling()
-    pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
+    
+    # pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
+    pipe.scheduler = DDPMScheduler.from_config(pipe.scheduler.config)
     
     pipe.to(device)
 
