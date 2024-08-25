@@ -17,5 +17,5 @@ einops
 
 # UVP
 torchvision==0.16
-pytorch3d
+pytorch3d @ https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu121_pyt211/download.html
 cupy-cuda11x==12.2.0
