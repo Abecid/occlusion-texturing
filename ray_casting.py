@@ -86,7 +86,8 @@ def normalize_to_box(pcd):
         centroid = (maxP+minP)/2
         pcd = pcd - centroid
         furthest_distance = np.amax(np.abs(pcd), axis=(axis, -1), keepdims=True)
-        pcd = pcd / furthest_distance
+        scale = 1 / furthest_distance
+        pcd = pcd * scale
     elif isinstance(pcd, torch.Tensor):
         maxP = torch.max(pcd, dim=axis, keepdim=True)[0]
         minP = torch.min(pcd, dim=axis, keepdim=True)[0]
@@ -95,11 +96,12 @@ def normalize_to_box(pcd):
         in_shape = list(pcd.shape[:axis])+[P*D]
         furthest_distance = torch.max(torch.abs(pcd).view(in_shape), dim=axis, keepdim=True)[0]
         furthest_distance = furthest_distance.unsqueeze(-1)
-        pcd = pcd / furthest_distance
+        scale = 1 / furthest_distance
+        pcd = pcd * scale
     else:
         raise ValueError()
 
-    return pcd, centroid, furthest_distance
+    return pcd, centroid, scale
 
 def generate_c2w_matrix(azimuth, elevation, radius):
     # Convert degrees to radians
@@ -192,13 +194,13 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
     mesh.visual = mesh.visual.to_color()
     
     vertices = mesh.vertices
-    vertices, centroid, furthest_distance = normalize_to_box(vertices)
+    vertices, centroid, scale = normalize_to_box(vertices)
     centroid = np.mean(vertices, axis=0)
     vertices -= centroid
     mesh.vertices = vertices
     
     # mesh, scale_factor = normalize_mesh(mesh)
-    print(f"Centroid: {centroid}, Furthest Distance: {furthest_distance}")
+    print(f"Centroid: {centroid}, Scaling: {scale}")
     print(f"Mesh extents: {mesh.bounding_box.extents}")
     
     camera_angle_x = float(camera_angle_x)

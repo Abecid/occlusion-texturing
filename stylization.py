@@ -10,6 +10,7 @@ import cv2
 
 import config
 from ip_adapter import IPAdapterXL, IPAdapter
+from texturing import StyleTexturingPipeline as stp
 
 # Set the device variable
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -108,9 +109,6 @@ def generate_style(
     image = images[0]
 
     return image
-
-def apply_texture(stylized_image):
-    pass
 
 def main(config_data):
     depth_model = config_data['controlnet']['depth_model']

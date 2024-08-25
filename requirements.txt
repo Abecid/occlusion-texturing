@@ -16,3 +16,4 @@ accelerate
 
 # UVP
 torchvision
+pytorch3d
