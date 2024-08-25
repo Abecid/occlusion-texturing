@@ -204,20 +204,23 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
     print(f"Mesh extents: {mesh.bounding_box.extents}")
     
     camera_angle_x = float(camera_angle_x)
+    
+    focal_length = 0.5 * image_width / np.tan(0.5 * camera_angle_x)
+
+    cx = image_width / 2.0
+    cy = image_height / 2.0
+
+    intrinsics = np.array([[focal_length, 0, cx],
+                            [0, focal_length, cy],
+                            [0, 0, 1]])
+    
+    hit_data = []
     for view_index, view in tqdm(enumerate(views), total=len(views)):
         azimuth, elevation, radius = view['azimuth'], view['elevation'], view['radius']
         c2w = generate_c2w_matrix(azimuth, elevation, radius)
         camera_position = c2w[:3, 3]
         print(f"Camera Position for View {view_index}: {camera_position}")
-        focal_length = 0.5 * image_width / np.tan(0.5 * camera_angle_x)
-
-        cx = image_width / 2.0
-        cy = image_height / 2.0
-
-        intrinsics = np.array([[focal_length, 0, cx],
-                                [0, focal_length, cy],
-                                [0, 0, 1]])
-
+        
         rays_o, rays_d = generate_rays((image_height, image_width), intrinsics, c2w)
 
         index_triangles, index_ray, points = ray_cast_mesh(mesh, rays_o, rays_d)
@@ -242,6 +245,16 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
             hits_per_ray[ray_idx].append((points[idx], normals[idx], colors[idx]))
 
         # hits_per_ray[ray_idx].sort(key=lambda hit: np.linalg.norm(hit[0] - c2w[:3, 3]))  # Sort by depth
+        
+        # Store hit data for later use
+        hit_data.append({
+            'hits_per_ray': hits_per_ray,
+            'c2w': c2w,
+            'image_height': image_height,
+            'image_width': image_width,
+            'face_indices': index_triangles,
+            'ray_indices': index_ray,
+        })
 
         # Populate the hit images
         for i in range(max_hits):
@@ -262,6 +275,7 @@ def save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, 
             cv2.imwrite(image_path, cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR))
 
     print("saved")
+    return hit_data
                 
 
 if __name__ == "__main__":

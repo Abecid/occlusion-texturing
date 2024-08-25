@@ -56,6 +56,36 @@ def get_canny_edges(image):
 
     return image
 
+def apply_styled_colors_to_mesh(mesh, hit_data, styled_hit_images):
+    # Load the styled hit images
+    max_hits = len(styled_hit_images)
+    for view_idx, view_hit_data in enumerate(hit_data):
+        hits_per_ray = view_hit_data['hits_per_ray']
+        image_height = view_hit_data['image_height']
+        image_width = view_hit_data['image_width']
+        
+        styled_colors = []
+        for i in range(max_hits):
+            styled_image = cv2.imread(styled_hit_images[i])
+            styled_image = cv2.cvtColor(styled_image, cv2.COLOR_BGR2RGB) / 255.0
+            styled_image = styled_image.reshape(-1, 3)
+            styled_colors.append(styled_image)
+        
+        new_face_colors = mesh.visual.face_colors
+        
+        for ray_idx, hits in hits_per_ray.items():
+            for i in range(max_hits):
+                if i < len(hits):
+                    u, v = divmod(ray_idx, image_width)
+                    point, original_color, face_idx = hits[i]
+                    new_color = styled_colors[i][u * image_width + v]
+                    new_face_colors[face_idx] = (new_color * 255).astype(np.uint8)
+        
+        # Update mesh colors
+        mesh.visual.face_colors = new_face_colors
+    
+    return mesh
+
 # Generate image with controlnet
 def generate_style(
     condition_image, 
