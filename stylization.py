@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import pickle
 
 from transformers import pipeline
 from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, StableDiffusionXLControlNetPipeline
@@ -57,13 +58,11 @@ def get_canny_edges(image):
 
     return image
 
-def apply_styled_colors_to_mesh(mesh, hit_data, styled_hit_images):
+def apply_styled_colors_to_mesh(mesh, hit_data, styled_hit_images, image_width=512):
     # Load the styled hit images
     max_hits = len(styled_hit_images)
     for view_idx, view_hit_data in enumerate(hit_data):
-        hits_per_ray = view_hit_data['hits_per_ray']
-        image_height = view_hit_data['image_height']
-        image_width = view_hit_data['image_width']
+        hits_per_ray = view_hit_data        
         
         styled_colors = []
         for i in range(max_hits):
@@ -171,9 +170,11 @@ def main(config_data):
     ip_adapter_ckpt_path = config_data['ip_adapter']['ckpt_path']
     image_encoder = config_data['ip_adapter']['image_encoder']
     controlnet_conditioning_scale = config_data['controlnet']['conditioning_scale']
+    ray_data_path = config_data['ray_data']['path']
     
     controlnet = depth_model if stylization_type == "depth" else canny_model
     mesh_name = os.path.splitext(os.path.basename(mesh_path))[0]
+    image_name = os.path.splitext(os.path.basename(base_image_path))[0]
 
     image = Image.open(base_image_path)
     style_image = Image.open(style_image_path)
@@ -193,13 +194,20 @@ def main(config_data):
         style_image=style_image,
         controlnet_conditioning_scale=controlnet_conditioning_scale
     )
+
+    output_path = os.path.join(output_path, mesh_name)
     
-    depth_filename = f"{stylization_type}_{mesh_name}.png"
-    filename = f"stylized_{mesh_name}_{stylization_type}.png"
+    depth_filename = f"{stylization_type}_{image_name}.png"
+    filename = f"stylized_{image_name}_{stylization_type}.png"
     style_output_path = os.path.join(output_path, filename)
     os.makedirs(os.path.dirname(style_output_path), exist_ok=True)
     stylized_image.save(style_output_path)
     condition_image.save(os.path.join(output_path, depth_filename))
+
+    if ray_data_path is not None:
+        with open(ray_data_path, 'rb') as file:
+            list_hits = pickle.load(file)
+        # apply_styled_colors_to_mesh(mesh, list_hits, [style_output_path])
 
 if __name__ == "__main__":
     args = config.get_config()

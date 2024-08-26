@@ -10,3 +10,5 @@ objaverse
 # IP-Adapter
 models
 sdxl_models
+
+*.pkl

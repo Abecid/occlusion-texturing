@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict
+import pickle
 
 import numpy as np
 from tqdm import tqdm
@@ -292,4 +293,11 @@ if __name__ == "__main__":
     image_height = config_data['rendering']['height']
     image_width = config_data['rendering']['width']
 
-    save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, image_height, image_width)
+    hit_data = save_plane_images(model_path, views, camera_angle_x, max_hits, output_path, image_height, image_width)
+
+    model_name = os.path.splitext(os.path.basename(model_path))[0]
+    output_path = os.path.join(output_path, model_name)
+    pckl_filename = f"{model_name}_hits.pkl"
+    output_path = os.path.join(output_path, pckl_filename)
+    with open(output_path, 'wb') as file:
+        pickle.dump(hit_data, file)
