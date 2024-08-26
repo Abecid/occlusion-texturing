@@ -96,7 +96,8 @@ def generate_style(
     sd_model="runwayml/stable-diffusion-v1-5",
     ip_adapter_ckpt_path="models/ip-adapter_sdxl.bin",
     image_encoder="models/image_encoder",
-    style_image=None
+    style_image=None,
+    controlnet_conditioning_scale=0.8
 ):
     controlnet = ControlNetModel.from_pretrained(
         controlnet, torch_dtype=torch.float16
@@ -149,7 +150,7 @@ def generate_style(
         num_inference_steps=30, 
         seed=SEED,
         image=condition_image,
-        controlnet_conditioning_scale=0.6,
+        controlnet_conditioning_scale=controlnet_conditioning_scale,
     )
     
     image = images[0]
@@ -169,6 +170,7 @@ def main(config_data):
     stylization_type = config_data['stylization']['type']
     ip_adapter_ckpt_path = config_data['ip_adapter']['ckpt_path']
     image_encoder = config_data['ip_adapter']['image_encoder']
+    controlnet_conditioning_scale = config_data['controlnet']['conditioning_scale']
     
     controlnet = depth_model if stylization_type == "depth" else canny_model
     mesh_name = os.path.splitext(os.path.basename(mesh_path))[0]
@@ -188,7 +190,8 @@ def main(config_data):
         sd_model=sd_model,
         ip_adapter_ckpt_path=ip_adapter_ckpt_path,
         image_encoder=image_encoder,
-        style_image=style_image
+        style_image=style_image,
+        controlnet_conditioning_scale=controlnet_conditioning_scale
     )
     
     depth_filename = f"{stylization_type}_{mesh_name}.png"

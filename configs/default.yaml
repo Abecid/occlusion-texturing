@@ -37,6 +37,7 @@ output:
 controlnet:
   depth_model: lllyasviel/sd-controlnet-depth # ['lllyasviel/sd-controlnet-depth', 'diffusers/controlnet-depth-sdxl-1.0']
   canny_model: lllyasviel/sd-controlnet-canny # ['lllyasviel/sd-controlnet-canny', 'diffusers/controlnet-canny-sdxl-1.0']
+  conditioning_scale: 0.9
 stable_diffusion:
   model: runwayml/stable-diffusion-v1-5 # ['runwayml/stable-diffusion-v1-5', 'stabilityai/stable-diffusion-xl-base-1.0']
   num_steps: 20
