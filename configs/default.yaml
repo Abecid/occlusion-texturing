@@ -32,6 +32,7 @@ rendering:
 output:
   rc: output/ray_casting
   style: output/style
+  textured_mesh: output/mesh
 
 # Depth to Image Generation
 controlnet:
@@ -51,3 +52,12 @@ stylization:
 ip_adapter:
   ckpt_path: models/ip-adapter_sd15.bin # ['models/ip-adapter_sd15.bin', 'sdxl_models/ip-adapter_sdxl.bin']
   image_encoder: models/image_encoder # ['models/image_encoder', 'sdxl_models/image_encoder']
+
+texturing:
+  ray_info: output/ray_casting/model/model_hits.pkl
+  style_images:
+    - view1:
+      - output/style/model/stylized_hit_0_canny.png
+      - output/style/model/stylized_hit_1_canny.png
+      - output/style/model/stylized_hit_2_canny.png
+      - output/style/model/stylized_hit_3_canny.png

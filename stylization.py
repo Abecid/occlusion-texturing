@@ -9,6 +9,7 @@ from PIL import Image
 import torch
 import yaml
 import cv2
+import trimesh
 
 import config
 from ip_adapter import IPAdapterXL, IPAdapter
@@ -57,34 +58,6 @@ def get_canny_edges(image):
     image = Image.fromarray(image)
 
     return image
-
-def apply_styled_colors_to_mesh(mesh, hit_data, styled_hit_images, image_width=512):
-    # Load the styled hit images
-    max_hits = len(styled_hit_images)
-    for view_idx, view_hit_data in enumerate(hit_data):
-        hits_per_ray = view_hit_data        
-        
-        styled_colors = []
-        for i in range(max_hits):
-            styled_image = cv2.imread(styled_hit_images[i])
-            styled_image = cv2.cvtColor(styled_image, cv2.COLOR_BGR2RGB) / 255.0
-            styled_image = styled_image.reshape(-1, 3)
-            styled_colors.append(styled_image)
-        
-        new_face_colors = mesh.visual.face_colors
-        
-        for ray_idx, hits in hits_per_ray.items():
-            for i in range(max_hits):
-                if i < len(hits):
-                    u, v = divmod(ray_idx, image_width)
-                    point, normal, original_color, face_idx = hits[i]
-                    new_color = styled_colors[i][u * image_width + v]
-                    new_face_colors[face_idx] = (new_color * 255).astype(np.uint8)
-        
-        # Update mesh colors
-        mesh.visual.face_colors = new_face_colors
-    
-    return mesh
 
 # Generate image with controlnet
 def generate_style(
@@ -170,7 +143,6 @@ def main(config_data):
     ip_adapter_ckpt_path = config_data['ip_adapter']['ckpt_path']
     image_encoder = config_data['ip_adapter']['image_encoder']
     controlnet_conditioning_scale = config_data['controlnet']['conditioning_scale']
-    ray_data_path = config_data['ray_data']['path']
     
     controlnet = depth_model if stylization_type == "depth" else canny_model
     mesh_name = os.path.splitext(os.path.basename(mesh_path))[0]
@@ -203,11 +175,6 @@ def main(config_data):
     os.makedirs(os.path.dirname(style_output_path), exist_ok=True)
     stylized_image.save(style_output_path)
     condition_image.save(os.path.join(output_path, depth_filename))
-
-    if ray_data_path is not None:
-        with open(ray_data_path, 'rb') as file:
-            list_hits = pickle.load(file)
-        # apply_styled_colors_to_mesh(mesh, list_hits, [style_output_path])
 
 if __name__ == "__main__":
     args = config.get_config()

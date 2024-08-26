@@ -28,4 +28,7 @@ python ray_casting.py
 python stylization.py
 ```
 
-## 3. Mesh Reconstruction via UV Mapping (xAtlas)
+## 3. Mesh Texturing with Stylized Images
+```
+python texturing.py
+```
